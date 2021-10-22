@@ -130,11 +130,14 @@ async function addRole() {
 
 function addEmployee() {
   let roles = []
-  let sql = `select id from roles`;
+  let sql = `select id, title from roles`;
   db.query(sql, (err, results) => {
     if (err) throw err;
     for (let i = 0; i < results.length; i++) {
-      roles.push(results[i].id);
+      roles.push({
+        name: results[i].title,
+        value: results[i].id
+      });
     }
     let empQuestions = [{
       type: 'input',
@@ -204,11 +207,11 @@ function updateRole() {
           message: "Which Role do you wish to apply?",
           choices: roles,
         }]).then((response) => {
-          console.log(response);
           let sql = `UPDATE employee set role_id = (${response.choice})where id = ${response.employee}`;
           db.query(sql, (err, results) => {
             if (err) throw err;
             console.table(results);
+            startApp();
           })
         })
     })
