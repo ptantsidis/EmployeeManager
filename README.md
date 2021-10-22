@@ -8,3 +8,4 @@ Install node.js, mysql2, npm inquire, npm console table.
  screencastify : https://watch.screencastify.com/v/4uRDQ5MsBNm42XbruQz6
  
 
+![EmployeeGenerator_screen](https://user-images.githubusercontent.com/90045665/138394225-5f69922a-d183-4875-9c06-604fc632f101.png)
