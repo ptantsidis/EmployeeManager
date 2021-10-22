@@ -1,11 +1,9 @@
-// const express = require('express');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 const Table = require('easy-table');
 const inquirer = require('inquirer');
-// const { get } = require('http');
-// const PORT = process.env.PORT || 3001;
-// const app = express();
+const e = require('express');
+const { start } = require('repl');
 let role = [];
 const db = mysql.createConnection(
   {
@@ -20,10 +18,7 @@ db.connect(function (err) {
   startApp()
 })
 
-
-
-
-var roleQuestions = [{
+let roleQuestions = [{
   type: 'input',
   name: 'title',
   message: "Name?",
@@ -39,11 +34,7 @@ var roleQuestions = [{
   message: "Depart ID?",
 }]
 
-// app.use(express.urlencoded({ extended: false }));
-// app.use(express.json());
-
-// Connect to database
-
+  
 function startApp() {
   inquirer.prompt([{
     type: 'rawlist',
@@ -56,7 +47,7 @@ function startApp() {
       case 'View All Departments':
         showDepartment()
         break;
-      case 'View All Roles': 1
+      case 'View All Roles': 
         showRoles()
         break;
       case 'View All Employees':
@@ -71,18 +62,18 @@ function startApp() {
       case 'Add a Role':
         addRole()
         break;
-      case 'Update Role':
+      case 'Update Employee Role':
         updateRole()
         break;
       case 'No':
-        break;
-    }
+        process.exit(1);
+     }
   })
 }
 async function showEmployees() {
   const sql = `SELECT a.id as Id, a.first_name as 'First Name', a.last_name as 'Last Name', b.title as Title, c.dept_name as Department, b.salary as Salary, d.last_name as 'Manager Last Name'
   FROM employee a inner join roles b on a.role_id = b.id inner join department c on b.dept_id = c.id
-  left outer join employee d on d.id=a.manager_id order by b.salary desc;`;
+  left outer join employee d on d.id=a.manager_id order by a.id;`;
   db.query(sql, (err, results) => {
     if (err) throw err;
     console.table(results);
@@ -140,8 +131,7 @@ async function addRole() {
 function addEmployee() {
   let roles = []
   let sql = `select id from roles`;
-  db.query(sql, (err, results
-  ) => {
+  db.query(sql, (err, results) => {
     if (err) throw err;
     for (let i = 0; i < results.length; i++) {
       roles.push(results[i].id);
@@ -173,50 +163,54 @@ function addEmployee() {
         db.query(sql, (err, results) => {
           if (err) throw err;
           console.table(results);
-          startApp()
+          startApp();
         })
       })
+  })
+};
+
+function updateRole() {
+  let roles = [];
+  let empData = [];
+  let sql = `select id,title from roles`;
+  db.query(sql, (err, results) => {
+    if (err) throw err;
+    for (let i = 0; i < results.length; i++) {
+      roles.push({
+        name: results[i].title,
+        value: results[i].id
+      });
+    }
+    console.log(roles);
+    sql = "select id, first_name,last_name from employee;"
+    db.query(sql, (err, empRes) => {
+      if (err) throw err;
+      for (let i = 0; i < empRes.length; i++) {
+        empData.push({
+          name: empRes[i].first_name + "," + empRes[i].last_name,
+          value: empRes[i].id
+        })
+      }
+      inquirer.prompt([
+        {
+          type: 'list',
+          name: 'employee',
+          message: "Which Employee?",
+          choices: empData,
+        },
+        {
+          type: 'list',
+          name: 'choice',
+          message: "Which Role do you wish to apply?",
+          choices: roles,
+        }]).then((response) => {
+          console.log(response);
+          let sql = `UPDATE employee set role_id = (${response.choice})where id = ${response.employee}`;
+          db.query(sql, (err, results) => {
+            if (err) throw err;
+            console.table(results);
+          })
+        })
     })
-  };
-
-
-
-// async function updateRole() {
-//   getRoles();
-//   //create array of roles 
-//   // response to fill choice list with role id
-
-//   // 
-//   inquirer.prompt([{
-//     type: 'list',
-//     name: 'choice',
-//     message: "Which Role do you wish to update?",
-// }]).then( (response) => {
-//   let userinput =  await inquirer.prompt(roleQuestions)
-//     console.log(userInput)
-//   //  find valid role then update
-//     let sql = `UPDATE roles set (first_name, last_name, role_id, manager_id) VALUES('${userinput.first_name}', '${userinput.last_name}', '${userinput.role_id}', '${userinput.manger_id}')`;
-//     db.query(sql, (err, results) => {
-//       if (err) throw err;
-//       console.table(results);  
-//       startApp()
-//     })
-// };
-
-// function getRoles();{
-//     let sql =  'select role_id,title, salary from roles';
-//     db.query(sql,  (err, results ) => {
-//       if (err) throw err; 
-//       let newRolearray = results;
-
-// }
-
-// Default response for any other request (Not Found)
-// app.use((req, res) => {
-//   res.status(404).end();
-// });
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
-// startApp()
+  });
+}
